@@ -10,3 +10,22 @@ window.onclick = function(e) {
         }
     }
 }
+function initGame() {
+    var cfg = {
+        draggable: true,
+        position: 'start',
+        onDrop: handleMove,
+    };
+
+    var board = new ChessBoard('gameBoard', cfg);
+    var game = new Chess();
+    
+}
+
+function handleMove(source, target) {
+    var move = game.move({from: source, to: target});
+}
+
+$(document).ready(function() {
+    initGame();
+});

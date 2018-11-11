@@ -181,3 +181,9 @@ ul.nav li a:hover {
 .show {
     display: block;
 }
+
+#gameBoard {
+width: 600px;
+height: 600px;
+
+}
