@@ -17,6 +17,84 @@
             <a href="rules.html">Rules</a>
             <a href="history.html">History</a>
         </div>
+        <pre>
+1. Standard chess rules apply, with the alteration of:
+    • the determination of checkmate/stalemate must account for the new piece rook-pawn, and the new moves
+    explode, shoot, pawnify, fort, and stargate. The move teleport is ignored for the purposes of determining
+    checkmate/stalemate.
+
+2. Explode: A player may cast explode on their own knight or queen.
+    • If cast upon a knight, the knight explodes (and is removed), displacing all non-king pieces in the sur-
+    rounding squares backwards one square radially. Any pieces sent off the board or to a non-empty square
+
+    are removed. The kings are unaffected by an explosion.
+    • If cast upon a queen, then the queen explodes (and is removed) in a line, which is either the horizontal,
+    vertical, or one of the two diagonals containing the queen (the player chooses which line). All pieces on
+    this line are destroyed and removed, with the exception of both kings.
+    • The queen cannot explode until she has moved at least once.
+
+3. Shoot A player may cast shoot on one of their own bishops and a diagonally adjacent pawn/knight of their
+colour.
+    • If cast upon a bishop and pawn, the pawn is shot outwards from the bishop along the diagonal. If it
+    collides with any piece, the pawn and the piece in question are removed (if the piece is a king, the king
+    is not removed and is unaffected). If the pawn does not collide with any piece before leaving the board,
+    it is simply removed from the game.
+    • If cast upon a bishop and a knight, the knight is shot outwards from the bishop along the diagonal. If
+    it collides with any piece, the piece in question is removed and replaced by the knight, whereupon the
+    knight explodes, exactly as described before. If the removed piece was a king, it is then replaced. If the
+    knight does not collide with any piece before leaving the board, it is simply removed from the game.
+
+4. Pawnify: If the rook of a player is one square behind a pawn of their own colour, they may cast pawnify on
+the rook. The pawn is removed from the game and the rook is promoted to being a rook-pawn. A rook-pawn
+can move like a rook, as well as being able to capture like a pawn. It is able to castle like a normal rook, but
+cannot do en passant. The rook-pawn is normally signaled by placing a pawn on top of the rook.
+
+5. Teleport: Once per game, each player may teleport their king to any empty square on the board which is not
+in check. The king cannot teleport out of check or stalemate (if the only valid move a player has is to teleport
+their king, then the game ends in a stalemate).
+
+6. Fort A player may cast fort on their own king if and only if the following conditions are satisfied:
+    • The king is not on the boundary of the board;
+    • In the 8 squares surrounding the king, only pawns of the king’s colour can be found, and there is at least
+    one alive pawn there;
+    • Each pawn of the king’s colour is either dead or in one of the 8 squares surrounding the king.
+    When the king casts fort, all dead pawns of the king’s colour are revived and placed around the king, so that
+    the king is surrounded by the 8 pawns of it’s colour. After fort has been cast, the player in question cannot
+    cast fort again for the rest of the game. If the king was one square away from the opponent’s backline when
+    fort was cast, the 3 forted pawns on the opponents backline are immediately promoted.
+
+7. Stargate: Consider the rectangle formed by two distinct pawns of the same colour. If stargate is cast on these
+pieces, all pieces of both colours inside the rectangle (not including the boundary) are instantly vapourized,
+except any kings. Stargate cannot be cast if any pieces are on the boundary of the rectangle, besides the
+pawns casting stargate. Stargate also cannot be cast if the opponent’s king is inside the stargated region, or
+if the stargated area is empty or only contains the king of the player casting stargate.
+
+
+Game Notation
+    • Standard algebraic notation is used for classic chess moves
+    • For knight explosions, use the notation “N”+knight location+“xx”. For example, exploding the knight on
+    square d4 is writted Nd4xx.
+    • For queen explosions, use the notation “Q”+queen location+“xx”+line exploding
+    – if exploding a file, use the file letter;
+    – if exploding a rank, use the rank number;
+    – if exploding a diagonal, use + for if it travels from the bottom left to top right (slope +1), and - for top
+    left to bottom right (slope -1).
+    For example, the queen on b2 exploding the diagonal from a1 to h8 is denoted “Qb2xx+”.
+    • For a bishop shooting a pawn/knight, use the notation “B”+bishop location+“xx”+location of piece being
+    shot. For example, a bishop on e3 shooting a pawn on f4 is denoted “Be3xxf4”.
+    • A rook casting pawnify is denoted “R”+rook location+“+”. For example, a rook on a1 casting pawnify is
+    denoted “Ra1+”.
+    • A rookpawn is given the code “RP”
+    • A king casting teleport is denoted “K”+“>”+new location. For example, a king on a1 teleporting to h1 is
+    denoted “K>h1“.
+    • A king casting fort is denoted “[K]”.
+    • A stargate is denoted by pawn 1 location+“<>”+pawn 2 location, where we use the pawn with the leftmost
+    file first. For example, pawns on a3 and g5 casting stargate is denoted “a3<>g5”.
+<pre>
+
+
+
+
         <div id="footer">
             Contacts: inverness@protonmail.ch
         </div>
