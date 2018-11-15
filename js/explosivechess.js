@@ -653,10 +653,10 @@ for (var i = first_sq; i <= last_sq; i++) {
       //knight explodes
       if (piece.type === 'n') {
        add_move(board, moves, i, i, BITS.EXPLOSION);
-     } else if (piece.type === 'r') {//rook absorbs pawn
-
-      var in_front = i + PAWN_OFFSETS[us][0]
-      if (!(in_front & 0x88) && board[in_front].type === 'p' && board[in_front].color === us) {//if the rook has a own color pawn in front of him
+     } else if (piece.type === 'r') {
+      //rook absorbs pawn
+      var in_front = i + PAWN_OFFSETS[us][0];
+      if (!(in_front & 0x88) && board[in_front] && board[in_front].type === 'p' && board[in_front].color === us) {//if the rook has a own color pawn in front of him
        add_move(board, moves, i, i, BITS.ABSORPTION);
      }
    }
