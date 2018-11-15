@@ -496,13 +496,15 @@ function build_move(board, from, to, flags, promotion) {
   }
   //if explosion add a list of exploded pieces, keeping track of their color as well.
   if (flags & BITS.EXPLOSION) {
-    move.exploded = [{type: 'n', color: turn, position: to}];//the very same knight is exploded
+    move.exploded = [{type: 'n', color: turn, from: from, to: to}];//the very same knight is exploded
     //explosion in a radius using king's offsets
     for (var j = 0, len = PIECE_OFFSETS['k'].length; j < len; j++) {
       var os = PIECE_OFFSETS['k'][j];
-      var sq = from + os;
-      if (!(sq & 0x88) && board[sq] != null && board[sq].type != 'k') {
-        move.exploded.push({type: board[sq].type, color: board[sq].color, position: sq})
+      var explosion_from = from + os;
+      if (!(explosion_from & 0x88) && board[explosion_from] != null && board[explosion_from].type != 'k') {//if in the board, there is anything but a king
+        var explosion_to = from + os + os;
+        move.exploded.push({type: board[explosion_from].type, color: board[explosion_from].color, from: explosion_from, to: explosion_to})
+
       }
     }
   } else if (board[to]) {
@@ -975,12 +977,17 @@ if (move.flags & BITS.BIG_PAWN) {
   ep_square = EMPTY;
 }
 /* if explosion capture, remove the exploded pieces */
-    if (move.flags & BITS.EXPLOSION) {
-      for (var i = move.exploded.length - 1; i >= 0; i--) {
-        board[move.exploded[i].position] = null;
-      }
-      
-    }
+if (move.flags & BITS.EXPLOSION) {
+  for (var i = move.exploded.length - 1; i >= 0; i--) {
+
+    if (!(move.exploded[i].to & 0x88) && board[move.exploded[i].to] === null && move.exploded[i].from != move.exploded[i].to) {//piece is pushed if still on the board and empty landing square and not the exploding knight!
+      board[move.exploded[i].to] = { type: move.exploded[i].type, color: move.exploded[i].color };
+      move.exploded[i].displaced = true;
+    } 
+    board[move.exploded[i].from] = null;
+  }
+
+}
 
 /* reset the 50 move counter if a pawn is moved or a piece is captured */
 if (move.piece === PAWN) {
@@ -1016,7 +1023,10 @@ function undo_move() {
 
   if (move.flags & BITS.EXPLOSION) {
     for (var i = move.exploded.length - 1; i >= 0; i--) {
-      board[move.exploded[i].position] = { type: move.exploded[i].type, color: move.exploded[i].color };
+      board[move.exploded[i].from] = { type: move.exploded[i].type, color: move.exploded[i].color };//restore pieces to original position
+      if (move.exploded[i].displaced) {//if a piece was displaced, remove it
+        board[move.exploded[i].to] = null;
+      } 
     }
   } else {
     board[move.from] = board[move.to];
