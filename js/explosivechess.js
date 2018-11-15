@@ -43,10 +43,11 @@
   var KNIGHT = 'n';
   var BISHOP = 'b';
   var ROOK = 'r';
+  var ROOKPAWN = 'j';
   var QUEEN = 'q';
   var KING = 'k';
 
-  var SYMBOLS = 'pnbrqkPNBRQK';
+  var SYMBOLS = 'pnbrjqkPNBRJQK';
 
   var DEFAULT_POSITION =
   'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -125,7 +126,8 @@
     PROMOTION: 16,
     KSIDE_CASTLE: 32,
     QSIDE_CASTLE: 64,
-    EXPLOSION: 128
+    EXPLOSION: 128,
+    ABSORPTION: 256
   };
 
   var RANK_1 = 7;
@@ -506,8 +508,8 @@ function build_move(board, from, to, flags, promotion) {
         move.exploded.push({type: board[explosion_from].type, color: board[explosion_from].color, from: explosion_from, to: explosion_to})
 
       }
-    }
-  } else if (board[to]) {
+    } 
+  }else if (board[to]) {
     move.captured = board[to].type;
   } else if (flags & BITS.EP_CAPTURE) {
     move.captured = PAWN;
@@ -593,7 +595,39 @@ for (var i = first_sq; i <= last_sq; i++) {
         add_move(board, moves, i, ep_square, BITS.EP_CAPTURE);
       }
     }
-      } else {//if not pawn
+  } else if (piece.type === ROOKPAWN) {
+    /* rook captures */
+    for (var j = 0, len = PIECE_OFFSETS[ROOK].length; j < len; j++) {
+          var offset = PIECE_OFFSETS[ROOK][j];
+          var square = i;
+
+          while (true) {
+            square += offset;
+            if (square & 0x88) break;
+
+            if (board[square] == null) {
+              add_move(board, moves, i, square, BITS.NORMAL);
+            } else {
+              if (board[square].color === us) break;
+              add_move(board, moves, i, square, BITS.CAPTURE);
+              break;
+            }
+
+
+          }
+        }
+     /* pawn captures */
+     for (j = 2; j < 4; j++) {
+      var square = i + PAWN_OFFSETS[us][j];
+      if (square & 0x88) continue;
+
+      if (board[square] != null && board[square].color === them) {
+        add_move(board, moves, i, square, BITS.CAPTURE);
+      } else if (square === ep_square) {
+        add_move(board, moves, i, ep_square, BITS.EP_CAPTURE);
+      }
+    }
+      } else {//if not pawn or rookpawn
         for (var j = 0, len = PIECE_OFFSETS[piece.type].length; j < len; j++) {
           var offset = PIECE_OFFSETS[piece.type][j];
           var square = i;
@@ -619,8 +653,14 @@ for (var i = first_sq; i <= last_sq; i++) {
       //knight explodes
       if (piece.type === 'n') {
        add_move(board, moves, i, i, BITS.EXPLOSION);
+     } else if (piece.type === 'r') {//rook absorbs pawn
+
+      var in_front = i + PAWN_OFFSETS[us][0]
+      if (!(in_front & 0x88) && board[in_front].type === 'p' && board[in_front].color === us) {//if the rook has a own color pawn in front of him
+       add_move(board, moves, i, i, BITS.ABSORPTION);
      }
    }
+ }
 
     /* check for castling if: a) we're generating all moves, or b) we're doing
      * single square move generation on the king's square
@@ -988,11 +1028,17 @@ if (move.flags & BITS.EXPLOSION) {
   }
 
 }
+//if absorption, change rook to rookpawn and remove pawn
+if (move.flags & BITS.ABSORPTION) {
+  board[move.from] = {type: 'j', color: move.color};
+  var in_front = move.from + PAWN_OFFSETS[move.color][0];
+  board[in_front] = null;
+}
 
 /* reset the 50 move counter if a pawn is moved or a piece is captured */
 if (move.piece === PAWN) {
   half_moves = 0;
-} else if (move.flags & (BITS.CAPTURE | BITS.EP_CAPTURE | BITS.EXPLOSION)) {
+} else if (move.flags & (BITS.CAPTURE | BITS.EP_CAPTURE | BITS.EXPLOSION | BITS.ABSORPTION)) {
   half_moves = 0;
 } else {
   half_moves++;
@@ -1028,8 +1074,13 @@ function undo_move() {
         board[move.exploded[i].to] = null;
       } 
     }
-  } else {
-    board[move.from] = board[move.to];
+  } else if (move.flags & BITS.ABSORPTION){
+  //if absorption, change rookpawn back to rook and add pawn
+  board[move.from] = {type: 'r', color: move.color};
+  var in_front = move.from + PAWN_OFFSETS[move.color][0];
+  board[in_front] = {type: 'p', color: move.color};
+} else {
+  board[move.from] = board[move.to];
     board[move.from].type = move.piece; // to undo any promotions
     board[move.to] = null;
   }
