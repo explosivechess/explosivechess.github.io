@@ -16,6 +16,7 @@ function initGame() {
   statusEl = $('#status'),
   fenEl = $('#fen'),
   pgnEl = $('#pgn');
+  explosiveCheckbox = $('#explosiveCheckbox');
 var removeGreySquares = function() {
   $('#board .square-55d63').css('background', '');
 };
@@ -41,18 +42,21 @@ var onDragStart = function(source, piece, position, orientation) {
 };
 
 var onDrop = function(source, target) {
+
 	removeGreySquares();
+  var legal = explosiveCheckbox.is(':checked') ? "explosive" : true;
   // see if the move is legal
   var move = game.move({
     from: source,
     to: target,
     promotion: 'q' // NOTE: always promote to a queen for example simplicity
-  });
+  }, {legal: legal});
 
   // illegal move
   if (move === null) return 'snapback';
 
   updateStatus();
+  if (move && target === "offboard") return 'trash';
 };
 
 // update the board position after the piece snap 
@@ -61,10 +65,12 @@ var onSnapEnd = function() {
   board.position(game.fen());
 };
 var onMouseoverSquare = function(square, piece) {
+  var legal = explosiveCheckbox.is(':checked') ? "explosive" : true;
   // get list of possible moves for this square
   var moves = game.moves({
     square: square,
-    verbose: true
+    verbose: true,
+    legal: legal
   });
 
   // exit if there are no moves available for this square
