@@ -116,6 +116,7 @@ var Chess = function(fen) {
         KSIDE_CASTLE: 'k',
         QSIDE_CASTLE: 'q',
         EXPLOSION: 'x',
+        ABSORPTION: 'a',
         KICK: 'y'
     };
 
@@ -569,12 +570,9 @@ var Chess = function(fen) {
                 }
             }
         } else if (flags & BITS.KICK) {
-            if (!(to & 0x88) && board[to] && board[to].type != 'k') {
+            if (!(to & 0x88)) {
                 move.captured = board[to].type;
                 move.capturedColor = board[to].color;
-            } else {
-                move.captured = null;
-                move.capturedColor = null;
             }
         } else if (board[to]) {
             move.captured = board[to].type;
@@ -738,7 +736,11 @@ var Chess = function(fen) {
                                 add_move(board, moves, i, 0x88, BITS.KICK);
                                 break;
                             } else if (board[square]) { //if find a piece in the path, add move if other color and not king, then break
-                                add_move(board, moves, i, square, BITS.KICK);
+                                if (board[square].type != 'k') {
+                                    add_move(board, moves, i, square, BITS.KICK);
+                                } else {
+                                    add_move(board, moves, i, 0x88, BITS.KICK);
+                                }
                                 break;
                             }
                         }
@@ -800,7 +802,11 @@ var Chess = function(fen) {
         for (var i = 0, len = moves.length; i < len; i++) {
             make_move(moves[i]);
             if (!king_attacked(us)) {
-                if (legal === "explosive" | [BITS.EXPLOSION, BITS.ABSORPTION, BITS.KICK].indexOf(moves[i].flags) === -1)
+                if (legal === "all")
+                    legal_moves.push(moves[i]);
+                else if (legal === "normal" && [BITS.EXPLOSION, BITS.ABSORPTION, BITS.KICK].indexOf(moves[i].flags) === -1)
+                    legal_moves.push(moves[i]);
+                else if (legal === "explosive" && [BITS.EXPLOSION, BITS.ABSORPTION, BITS.KICK].indexOf(moves[i].flags) !== -1)
                     legal_moves.push(moves[i]);
             }
             undo_move();
@@ -923,11 +929,11 @@ var Chess = function(fen) {
     }
 
     function in_checkmate() {
-        return in_check() && generate_moves().length === 0;
+        return in_check() && generate_moves({legal: "all"}).length === 0;
     }
 
     function in_stalemate() {
-        return !in_check() && generate_moves().length === 0;
+        return !in_check() && generate_moves({legal: "all"}).length === 0;
     }
 
     function insufficient_material() {
@@ -1032,11 +1038,8 @@ var Chess = function(fen) {
         var us = turn;
         var them = swap_color(us);
         push(move);
-        if (move.flags & BITS.KICK) {
-            if (!(move.to & 0x88) && board[move.to] && board[move.to].type != 'k') {
-                board[move.to] = null;
-            }
-        } else {
+
+        if (!(move.to & 0x88)) {
             board[move.to] = board[move.from];
         }
         board[move.from] = null;
@@ -1130,12 +1133,16 @@ var Chess = function(fen) {
             board[in_front] = null;
         }
 
-
+        if (move.flags & BITS.KICK) {
+            if (!(move.to & 0x88)) {
+                board[move.to] = null;
+            }
+        }
 
         /* reset the 50 move counter if a pawn is moved or a piece is captured */
         if (move.piece === PAWN) {
             half_moves = 0;
-        } else if (move.flags & (BITS.CAPTURE | BITS.EP_CAPTURE | BITS.EXPLOSION | BITS.ABSORPTION | BITS.KICK)) {
+        } else if (move.flags & (BITS.CAPTURE | BITS.EP_CAPTURE | BITS.EXPLOSION | BITS.ABSORPTION)) {
             half_moves = 0;
         } else {
             half_moves++;
@@ -1179,9 +1186,7 @@ var Chess = function(fen) {
         } else if (move.flags & BITS.KICK) {
             //if kick, reset pawn and eventually captured piece
             board[move.from] = { type: move.piece, color: move.color };
-            
-            if (move.captured && move.capturedColor && board[move.to] && board[move.to].type != 'k') {
-              console.log(move);
+            if (!(move.to & 0x88)) {
                 board[move.to] = { type: move.captured, color: move.capturedColor };
             }
 
