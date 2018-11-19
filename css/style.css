@@ -187,10 +187,8 @@ ul.nav li a:hover {
 #board {
     width: 600px;
     height: 600px;
-    display: inline;
 }
 .aParent div {
     float: left;
     clear: none; 
-    text-align: center;
 }

@@ -16,17 +16,16 @@
     <script src="js/jquery-3.3.1.min.js"></script>
     <script src="js/explosivechess.js"></script>
     <script src="js/explosivechessboard.js"></script>
-    <script src="js/functions.js" type="text/javascript"></script>
 </head>
 
 <body>
     <h1 id="header">Rules</h1>
-        <div class="navbar">
-            <a href="index.html">Home</a>
-            <a href="rules.html">Rules</a>
-            <a href="history.html">History</a>
-        </div>
-        <pre>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="rules.html">Rules</a>
+        <a href="history.html">History</a>
+    </div>
+    <pre>
 1. Standard chess rules apply, with the alteration of:
     • the determination of checkmate/stalemate must account for the new piece rook-pawn, and the new moves
     explode, shoot, pawnify, fort, and stargate. The move teleport is ignored for the purposes of determining
@@ -41,7 +40,11 @@
     vertical, or one of the two diagonals containing the queen (the player chooses which line). All pieces on
     this line are destroyed and removed, with the exception of both kings.
     • The queen cannot explode until she has moved at least once.
-
+</pre>
+    <p>
+        <div id="board"></div>
+    </p>
+    <pre>
 3. Shoot A player may cast shoot on one of their own bishops and a diagonally adjacent pawn/knight of their
 colour.
     • If cast upon a bishop and pawn, the pawn is shot outwards from the bishop along the diagonal. If it
