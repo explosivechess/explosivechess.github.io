@@ -116,7 +116,9 @@ var Chess = function(fen) {
         KSIDE_CASTLE: 'k',
         QSIDE_CASTLE: 'q',
         EXPLOSION: 'x',
-        KICK: 'y'
+        ABSORPTION: 'a',
+        KICK: 'y',
+        KICKEXPLOSION: 'y'
     };
 
     var BITS = {
@@ -129,8 +131,10 @@ var Chess = function(fen) {
         QSIDE_CASTLE: 64,
         EXPLOSION: 128,
         ABSORPTION: 256,
-        KICK: 512
+        KICK: 512,
+        KICKEXPLOSION: 1024
     };
+    var EXPLOSIVEBITS = [BITS.EXPLOSION, BITS.ABSORPTION, BITS.KICK, BITS.KICKEXPLOSION]
 
     var RANK_1 = 7;
     var RANK_2 = 6;
@@ -569,12 +573,25 @@ var Chess = function(fen) {
                 }
             }
         } else if (flags & BITS.KICK) {
-            if (!(to & 0x88) && board[to] && board[to].type != 'k') {
+            if (!(to & 0x88)) {
                 move.captured = board[to].type;
                 move.capturedColor = board[to].color;
-            } else {
-                move.captured = null;
-                move.capturedColor = null;
+            }
+        } else if (flags & BITS.KICKEXPLOSION) {
+            move.exploded = [];
+            if (!(to & 0x88)) {
+                //move.exploded = [{ type: 'n', color: turn, from: from, to: from }]; //the very same knight is exploded
+                move.captured = board[to].type;
+                move.capturedColor = board[to].color;
+                //explosion in a radius using king's offsets
+                for (var j = 0, len = PIECE_OFFSETS['k'].length; j < len; j++) {
+                    var os = PIECE_OFFSETS['k'][j];
+                    var explosion_from = to + os;
+                    if (!(explosion_from & 0x88) && board[explosion_from] && board[explosion_from].type != 'k') { //if in the board, there is anything but a king
+                        var explosion_to = to + os + os;
+                        move.exploded.push({ type: board[explosion_from].type, color: board[explosion_from].color, from: explosion_from, to: explosion_to })
+                    }
+                }
             }
         } else if (board[to]) {
             move.captured = board[to].type;
@@ -719,7 +736,25 @@ var Chess = function(fen) {
             //add here explosive chess moves
             //knight explodes
             if (piece.type === 'n') {
+                //knight explodes in place
                 add_move(board, moves, i, i, BITS.EXPLOSION);
+                //bishop kicks knight if next to it. check if I have a bishop diagonally next to the knight
+                for (var j = 0, len = PIECE_OFFSETS['b'].length; j < len; j++) {
+                    var offset = PIECE_OFFSETS['b'][j];
+                    var square = i;
+                    if (board[i + offset] && board[i + offset].type === "b" && board[i + offset].color === us) {
+                        while (true) {
+                            square -= offset;
+                            if (square & 0x88) { //if outside add move to shot knight outside board.
+                                add_move(board, moves, i, 0x88, BITS.KICKEXPLOSION);
+                                break;
+                            } else if (board[square]) { //if find a piece in the path, add move then break
+                                add_move(board, moves, i, square, BITS.KICKEXPLOSION);
+                                break;
+                            }
+                        }
+                    }
+                }
             } else if (piece.type === 'r') {
                 //rook absorbs pawn
                 var in_front = i + PAWN_OFFSETS[us][0];
@@ -734,17 +769,19 @@ var Chess = function(fen) {
                     if (board[i + offset] && board[i + offset].type === "b" && board[i + offset].color === us) {
                         while (true) {
                             square -= offset;
-                            if (square & 0x88) { //if outside add move to shot pawn outside board. Not working now as there is no way to drag pawn outside 
+                            if (square & 0x88) { //if outside add move to shot pawn outside board. 
                                 add_move(board, moves, i, 0x88, BITS.KICK);
                                 break;
-                            } else if (board[square]) { //if find a piece in the path, add move if other color and not king, then break
-                                add_move(board, moves, i, square, BITS.KICK);
+                            } else if (board[square]) { //if find a piece in the path, add move  then break
+                                if (board[square].type != 'k') {
+                                    add_move(board, moves, i, square, BITS.KICK);
+                                } else {
+                                    add_move(board, moves, i, 0x88, BITS.KICK);
+                                }
                                 break;
                             }
                         }
                     }
-
-
                 }
             }
 
@@ -800,7 +837,11 @@ var Chess = function(fen) {
         for (var i = 0, len = moves.length; i < len; i++) {
             make_move(moves[i]);
             if (!king_attacked(us)) {
-                if (legal === "explosive" | [BITS.EXPLOSION, BITS.ABSORPTION, BITS.KICK].indexOf(moves[i].flags) === -1)
+                if (legal === "all")
+                    legal_moves.push(moves[i]);
+                else if (legal === "normal" && EXPLOSIVEBITS.indexOf(moves[i].flags) === -1)
+                    legal_moves.push(moves[i]);
+                else if (legal === "explosive" && EXPLOSIVEBITS.indexOf(moves[i].flags) !== -1)
                     legal_moves.push(moves[i]);
             }
             undo_move();
@@ -923,11 +964,11 @@ var Chess = function(fen) {
     }
 
     function in_checkmate() {
-        return in_check() && generate_moves().length === 0;
+        return in_check() && generate_moves({ legal: "all" }).length === 0;
     }
 
     function in_stalemate() {
-        return !in_check() && generate_moves().length === 0;
+        return !in_check() && generate_moves({ legal: "all" }).length === 0;
     }
 
     function insufficient_material() {
@@ -1032,11 +1073,8 @@ var Chess = function(fen) {
         var us = turn;
         var them = swap_color(us);
         push(move);
-        if (move.flags & BITS.KICK) {
-            if (!(move.to & 0x88) && board[move.to] && board[move.to].type != 'k') {
-                board[move.to] = null;
-            }
-        } else {
+
+        if (!(move.to & 0x88)) {
             board[move.to] = board[move.from];
         }
         board[move.from] = null;
@@ -1123,6 +1161,19 @@ var Chess = function(fen) {
             }
 
         }
+
+        if (move.flags & BITS.KICKEXPLOSION) {
+            for (var i = move.exploded.length - 1; i >= 0; i--) {
+
+                if (!(move.exploded[i].to & 0x88) && board[move.exploded[i].to] === null) { //piece is pushed if still on the board and empty landing square and not the exploding knight!
+                    board[move.exploded[i].to] = { type: move.exploded[i].type, color: move.exploded[i].color };
+                    move.exploded[i].displaced = true;
+                }
+                board[move.exploded[i].from] = null;
+            }
+            board[move.from] = null;
+            board[move.to] = null;
+        }
         //if absorption, change rook to rookpawn and remove pawn
         if (move.flags & BITS.ABSORPTION) {
             board[move.from] = { type: 'j', color: move.color };
@@ -1130,12 +1181,16 @@ var Chess = function(fen) {
             board[in_front] = null;
         }
 
-
+        if (move.flags & BITS.KICK) {
+            if (!(move.to & 0x88)) {
+                board[move.to] = null;
+            }
+        }
 
         /* reset the 50 move counter if a pawn is moved or a piece is captured */
         if (move.piece === PAWN) {
             half_moves = 0;
-        } else if (move.flags & (BITS.CAPTURE | BITS.EP_CAPTURE | BITS.EXPLOSION | BITS.ABSORPTION | BITS.KICK)) {
+        } else if (move.flags & (BITS.CAPTURE | BITS.EP_CAPTURE | BITS.EXPLOSION | BITS.ABSORPTION)) {
             half_moves = 0;
         } else {
             half_moves++;
@@ -1171,6 +1226,19 @@ var Chess = function(fen) {
                     board[move.exploded[i].to] = null;
                 }
             }
+
+        } else if (move.flags & BITS.KICKEXPLOSION) {
+            board[move.from] = { type: 'n', color: move.color };
+            if (!(move.to & 0x88)) {
+                board[move.to] = { type: move.captured, color: move.capturedColor };
+            }
+            for (var i = move.exploded.length - 1; i >= 0; i--) {
+                board[move.exploded[i].from] = { type: move.exploded[i].type, color: move.exploded[i].color }; //restore pieces to original position
+                if (move.exploded[i].displaced) { //if a piece was displaced, remove it
+                    board[move.exploded[i].to] = null;
+                }
+            }
+
         } else if (move.flags & BITS.ABSORPTION) {
             //if absorption, change rookpawn back to rook and add pawn
             board[move.from] = { type: 'r', color: move.color };
@@ -1179,9 +1247,7 @@ var Chess = function(fen) {
         } else if (move.flags & BITS.KICK) {
             //if kick, reset pawn and eventually captured piece
             board[move.from] = { type: move.piece, color: move.color };
-            
-            if (move.captured && move.capturedColor && board[move.to] && board[move.to].type != 'k') {
-              console.log(move);
+            if (!(move.to & 0x88)) {
                 board[move.to] = { type: move.captured, color: move.capturedColor };
             }
 
