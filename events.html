@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Explosive Chess</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/chessboard-0.3.0.min.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="manifest" href="/icons/site.webmanifest">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <script src="js/jquery-3.3.1.min.js"></script>
+</head>
+
+<body>
+    <h1 id="header">History</h1>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="rules.html">Rules</a>
+        <a href="history.html">History</a>
+        <a href="events.html">Events</a>
+    </div>
+    <div id="eventsContainer"></div>
+    <script>
+    var container = $("#eventsContainer");
+    console.log(container);
+    var rootFolder = window.location.origin + '/events/';
+    $.get(rootFolder, (data) => {
+        let listing = parseDirectoryListing(data);
+        for (var i = listing.length - 1; i >= 0; i--) {
+            var a = document.createElement('a');
+            var linkText = document.createTextNode(listing[i].replace(/_/g, " "));
+            a.appendChild(linkText);
+            a.title = listing[i];
+            a.href = rootFolder + listing[i] + "/index.html";
+            container.append(a);
+        }
+    });
+    function parseDirectoryListing(text) {
+        let docs = text
+            .match(/href="([\w]+)/g)
+            .map((x) => x.replace('href="', ''));
+        return docs;
+    }
+    </script>
+</body>
+
+</html>

@@ -15,7 +15,7 @@
     <meta name="msapplication-TileColor" content="#da532c">
     <meta name="theme-color" content="#ffffff">
     <script src="js/jquery-3.3.1.min.js"></script>
-    <script src="js/explosivechess-0.0.2.js"></script>
+    <script src="js/explosivechess-0.0.3.js"></script>
     <script src="js/explosivechessboard.js"></script>
     <script src="js/functions.js" type="text/javascript"></script>
 </head>
@@ -26,10 +26,18 @@
         <a href="index.html">Home</a>
         <a href="rules.html">Rules</a>
         <a href="history.html">History</a>
+        <a href="events.html">Events</a>
     </div>
     <div class="aParent">
         <div id="board"></div>
         <div>
+            <p>Queen explosion: <form action="">
+                    <input type="radio" name="queenExplosion" value="leftright" checked> Left-Right
+                    <input type="radio" name="queenExplosion" value="updown"> Up-Down
+                    <input type="radio" name="queenExplosion" value="bltr"> BottomLeft-TopRight
+                    <input type="radio" name="queenExplosion" value="bltr"> BottomRight-TopLeft
+                </form>
+            </p>
             <p>Status: <span id="status"></span></p>
             <p>FEN: <span id="fen"></span></p>
             <p>PGN: <span id="pgn"></span></p>

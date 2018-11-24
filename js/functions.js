@@ -31,6 +31,7 @@ function initGame() {
         pgnEl = $('#pgn');
     explosiveCheckbox = $('#explosiveCheckbox');
     normalCheckbox = $('#normalCheckbox');
+    queenExplosion = $("[name='queenExplosion']");
     var removeColorSquares = function() {
         $('#board .square-55d63').css('background', '');
         $('#board').css('border', '25px solid white');
@@ -73,6 +74,10 @@ function initGame() {
         else if (normalCheckbox.is(':checked')) var legal = "normal";
         else if (explosiveCheckbox.is(':checked')) var legal = "explosive";
         else return;
+
+
+
+
         var move = game.move({
             from: source,
             to: target,
