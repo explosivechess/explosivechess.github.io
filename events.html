@@ -28,10 +28,11 @@
     <div id="eventsContainer"></div>
     <script>
     var container = $("#eventsContainer");
-    console.log(container);
     var rootFolder = window.location.origin + '/events/';
+    console.log(rootFolder);
     $.get(rootFolder, (data) => {
         let listing = parseDirectoryListing(data);
+        console.log(listing);
         for (var i = listing.length - 1; i >= 0; i--) {
             var a = document.createElement('a');
             var linkText = document.createTextNode(listing[i].replace(/_/g, " "));
@@ -41,6 +42,7 @@
             container.append(a);
         }
     });
+
     function parseDirectoryListing(text) {
         let docs = text
             .match(/href="([\w]+)/g)
