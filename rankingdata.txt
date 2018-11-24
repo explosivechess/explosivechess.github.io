@@ -1,0 +1,7 @@
+1 Michele Fornea  1200    1440    ITA
+3 Vladmir Sicca   1200    1200    BRA 
+2 Jordan Barrett  1200    1200    CAN 
+0 Alessandro Ricottone    1200    1272    ITA 
+4 James Rickards  1200    1200    CAN
+6 Filippo Malandra    1200    1007    ITA 
+5 Peter Xu    1200    1007    CAN
